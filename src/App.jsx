@@ -8,9 +8,10 @@ import {
 } from "lucide-react";
 
 import "./App.css";
-
-const API_URL = "http://localhost:5000";
-function AdminDashboard() {
+import AdminLogin from "./AdminLogin";
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+function AdminDashboard({ token, onLogout }) {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,8 +32,18 @@ function AdminDashboard() {
 
     try {
       const response = await fetch(
-        `${API_URL}/api/admin/enquiries`
-      );
+  `${API_URL}/api/admin/enquiries`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
+
+if (response.status === 401 || response.status === 403) {
+  onLogout();
+  return;
+}
 
       const data = await response.json();
 
@@ -58,9 +69,10 @@ function AdminDashboard() {
         `${API_URL}/api/admin/enquiries/${id}/status`,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json"
-          },
+         headers: {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`
+},
           body: JSON.stringify({ status })
         }
       );
@@ -125,10 +137,19 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <a href="/" className="admin-back-link">
-          <ArrowRight size={16} />
-          View Website
-        </a>
+       <div className="admin-header-actions">
+  <a href="/" className="admin-back-link">
+    <ArrowRight size={16} />
+    View Website
+  </a>
+
+  <button
+    className="admin-logout"
+    onClick={onLogout}
+  >
+    Logout
+  </button>
+</div>
       </header>
 
       <main className="admin-content">
@@ -308,7 +329,10 @@ function ClinicWebsite() {
         },
         body: JSON.stringify(form)
       });
-
+if (response.status === 401 || response.status === 403) {
+  onLogout();
+  return;
+}
       const data = await response.json();
 
       if (!response.ok) {
@@ -569,7 +593,29 @@ function ClinicWebsite() {
 function App() {
   const isAdminPage = window.location.pathname === "/admin";
 
-  return isAdminPage ? <AdminDashboard /> : <ClinicWebsite />;
+  const [token, setToken] = useState(
+    () => sessionStorage.getItem("brightsmile-admin-token")
+  );
+
+  const handleLogin = (newToken) => {
+    sessionStorage.setItem("brightsmile-admin-token", newToken);
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("brightsmile-admin-token");
+    setToken(null);
+  };
+
+  if (!isAdminPage) {
+    return <ClinicWebsite />;
+  }
+
+  return token ? (
+    <AdminDashboard token={token} onLogout={handleLogout} />
+  ) : (
+    <AdminLogin onLogin={handleLogin} />
+  );
 }
 
 export default App;

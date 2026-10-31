@@ -4,7 +4,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
-
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { rateLimit } = require("express-rate-limit");
 const app = express();
 
 app.use(cors({
@@ -147,8 +149,108 @@ app.post("/api/enquiries", async (req, res) => {
         });
     }
 });
+
+// Verify admin JWT authentication
+function authenticateAdmin(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+            success: false,
+            message: "Authentication required."
+        });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Admin access required."
+            });
+        }
+
+        req.admin = decoded;
+        next();
+
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired token."
+        });
+    }
+}
+// Admin login rate limiter
+const adminLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    message: {
+        success: false,
+        message: "Too many failed login attempts. Please try again later."
+    }
+});
+// Admin login
+app.post("/api/admin/login", adminLoginLimiter, async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (
+            typeof email !== "string" ||
+            typeof password !== "string" ||
+            !email.trim() ||
+            !password
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required."
+            });
+        }
+
+        const validEmail =
+            email.trim().toLowerCase() ===
+            process.env.ADMIN_EMAIL?.trim().toLowerCase();
+
+        const validPassword = await bcrypt.compare(
+            password,
+            process.env.ADMIN_PASSWORD_HASH || ""
+        );
+
+        if (!validEmail || !validPassword) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        const token = jwt.sign(
+            { role: "admin" },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+
+        res.json({
+            success: true,
+            message: "Admin login successful.",
+            token
+        });
+
+    } catch (error) {
+        console.error("Admin login failed:", error.message);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to process login."
+        });
+    }
+});
 // Get all appointment enquiries
-app.get("/api/admin/enquiries", async (req, res) => {
+    app.get("/api/admin/enquiries", authenticateAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT
@@ -179,7 +281,7 @@ app.get("/api/admin/enquiries", async (req, res) => {
 });
 
 // Update enquiry status
-app.patch("/api/admin/enquiries/:id/status", async (req, res) => {
+app.patch("/api/admin/enquiries/:id/status", authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
