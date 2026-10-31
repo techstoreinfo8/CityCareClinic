@@ -243,10 +243,10 @@ async function startServer() {
     try {
         await pool.query("SELECT 1");
 
-        app.listen(PORT, () => {
+        app.listen(PORT, "0.0.0.0", () => {
             console.log("--------------------------------");
-            console.log("Suvexa Clinic API is running");
-            console.log(`http://localhost:${PORT}`);
+            console.log("BrightSmile Clinic API is running");
+            console.log(`Server listening on port ${PORT}`);
             console.log("PostgreSQL connected");
             console.log("--------------------------------");
         });
