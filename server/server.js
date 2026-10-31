@@ -13,13 +13,16 @@ app.use(cors({
 
 app.use(express.json({ limit: "10kb" }));
 
-// PostgreSQL connection
 const pool = new Pool({
-    host: process.env.PGHOST,
-    port: Number(process.env.PGPORT),
-    database: process.env.PGDATABASE,
-    user: process.env.PGUSER,
-    password: process.env.PGPASSWORD
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 // Health check
