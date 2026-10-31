@@ -9,19 +9,27 @@ const jwt = require("jsonwebtoken");
 const { rateLimit } = require("express-rate-limit");
 const app = express();
 
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: "http://localhost:5173"
+    origin: allowedOrigins
 }));
 
 app.use(express.json({ limit: "10kb" }));
 
-// PostgreSQL connection
 const pool = new Pool({
-    host: process.env.PGHOST,
-    port: Number(process.env.PGPORT),
-    database: process.env.PGDATABASE,
-    user: process.env.PGUSER,
-    password: process.env.PGPASSWORD
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 // Health check
@@ -31,7 +39,7 @@ app.get("/api/health", async (req, res) => {
 
         res.json({
             success: true,
-            message: "Suvexa Clinic API is running",
+            message: "BrightSmile Clinic API is running",
             database: "PostgreSQL connected"
         });
     } catch (error) {
@@ -345,10 +353,10 @@ async function startServer() {
     try {
         await pool.query("SELECT 1");
 
-        app.listen(PORT, () => {
+        app.listen(PORT, "0.0.0.0", () => {
             console.log("--------------------------------");
-            console.log("Suvexa Clinic API is running");
-            console.log(`http://localhost:${PORT}`);
+            console.log("BrightSmile Clinic API is running");
+            console.log(`Server listening on port ${PORT}`);
             console.log("PostgreSQL connected");
             console.log("--------------------------------");
         });

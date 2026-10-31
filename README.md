@@ -24,13 +24,13 @@ If you are developing a production application, we recommend using TypeScript wi
 # 2. brightsmile-appointment-client:
 # – separate appointment enquiry # application and admin dashboard.
 
-
 # Notes:
-React/Vite frontend	Done
-Node.js/Express backend	Done
-PostgreSQL connectivity	Done
-Production CORS	Done
-Render environment variables	Done
-Admin JWT authentication	Done
-Login rate limiting	Done
-Live appointment workflow	Tested
+
+React/Vite frontend      Done
+Node.js/Express backend  Done
+PostgreSQL connectivity  Done
+Production CORS          Done
+Render environment variables     Done
+Admin JWT authentication Done
+Login rate limiting      Done
+Live appointment workflow Tested
