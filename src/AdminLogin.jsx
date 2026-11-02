@@ -2,7 +2,7 @@ import { useState } from "react";
 import { HeartPulse, ShieldCheck, ArrowRight } from "lucide-react";
 
 const API_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_BASE_URL || "https://citycareclinic-api.onrender.com";
 
 function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState("admin@brightsmile.com");
