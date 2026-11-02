@@ -13,7 +13,7 @@ import AdminLogin from "./AdminLogin";
 const API_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+  "https://citycareclinic-api.onrender.com";
 
 function AdminDashboard({ token, onLogout }) {
   const [enquiries, setEnquiries] = useState([]);
